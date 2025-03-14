@@ -1,0 +1,471 @@
+---
+title: 'EVTECIAS: RESULTADOS E PERSPECTIVAS'
+author: 
+  - 'Victor Valerio'
+  - 'Centro de Excelência em Tecnologias para a Transição Energética<br> (CETTE)'
+date: '`r format(Sys.Date(), "%d-%m-%Y")`'
+output:
+  xaringan::moon_reader:
+    css: xaringan-themer.css
+    nature:
+      slideNumberFormat: "%current%"
+      highlightStyle: github
+      highlightLines: true
+      ratio: 16:9
+      countIncrementalSlides: true
+---
+
+```{r xaringan-themer, message=FALSE, warning=FALSE, include=FALSE}
+# PACOTES NECESSÁRIOS: ----
+library(xaringan)
+library(xaringanthemer)
+library(xaringanExtra)
+library(magrittr, include.only = '%>%')
+library(ggplot2)
+library(plotly)
+
+options(htmltools.dir.version = FALSE)
+# CONFIGURAÇÃO PADRÃO CHUNK: ----
+knitr::opts_chunk$set(echo = F,
+                      cache = T,
+                      results = 'asis', 
+                      warning = F, 
+                      message = F, 
+                      error = F, 
+                      fig.align = 'center', 
+                      out.width = '100%',
+                      dpi = 600)
+
+# TEMAS DO SLIDE: ----
+style_mono_light(
+  base_color = '#003364',
+  header_font_google = google_font('Josefin Sans'),
+  text_font_google   = google_font('Montserrat'),
+  code_font_google   = google_font('Fira Mono'),
+  text_font_size = '30px',
+  header_h1_font_size = '3rem',
+  header_h2_font_size = '2rem',
+  header_h3_font_size = '1.5rem'
+)
+
+# RECURSOS DO SLIDE: ----
+use_scribble()
+use_search(show_icon = TRUE)
+```
+
+
+```{r include=FALSE}
+# IMPORTAÇÃO DOS DADOS: ----
+# SIMULAÇÃO DE MONTE CARLO: ----
+smc <- readxl::read_xlsx(
+  path = 'parametros_avaliacao_financeira.xlsx',
+  sheet = 2) %>%
+  janitor::clean_names()
+
+# ANÁLISE DE SENSIBILIDADE: ----
+sensibilidade <- readxl::read_xlsx('sensibilidade_det.xlsx') %>%
+  janitor::clean_names() %>%
+  dplyr::mutate(materia_prima = dplyr::case_when(
+    materia_prima == 'SOJA' ~ 'Soja',
+    materia_prima == 'GIRASSOL' ~ 'Girassol',
+    materia_prima == 'PALMA' ~ 'Palma',
+    materia_prima == 'MACAÚBA' ~ 'Macaúba',
+    materia_prima == 'MILHO' ~ 'Milho',
+    materia_prima == 'CANA-DE-AÇÚCAR' ~ 'Cana-de-açúcar',
+    materia_prima == 'SORGO SACARINO' ~ 'Sorgo Sacarino',
+    materia_prima == 'EUCALIPTO' ~ 'Eucalipto')) %>%
+  dplyr::transmute(rota = paste0(materia_prima,
+                                 ' - ',
+                                 rota_tecnologica),
+                   cenario = cenario_base,
+                   lcof_empresa = lcof_empresa_variacao_10_percent,
+                   lcof_acionista = lcof_acionista_variacao_10_percent) %>%
+  dplyr::mutate(cenario = dplyr::case_when(
+    cenario == 'Rendimento Plantação' ~ 'Rendimento - Biomassa Bruta',
+    cenario == 'Custo Fixo - Plantação' ~ 'Custo Fixo - Biomassa Bruta',
+    cenario == 'Custo Variável - Plantação' ~ 'Custo Variável - Biomassa Bruta',
+    cenario == 'Rendimento - Biocombustível' ~ 'Rendimento - SAF',
+    cenario == 'CAPEX - Biocombustível' ~ 'CAPEX - SAF',
+    cenario == 'OPEX - Biocombustível' ~ 'OPEX - SAF',
+    TRUE ~ cenario)) %>%
+  dplyr::mutate(lcof_empresa = round(lcof_empresa*100, 2),
+                lcof_acionista = round(lcof_acionista*100, 2)) %>%
+  dplyr::filter(cenario != 'Cenário Base')
+
+sensibilidade_media <- sensibilidade %>%
+  tidyr::separate(col = rota,
+                  sep = ' - ',
+                  into = c('biomassa','tec')) %>%
+  dplyr::group_by(tec, cenario) %>%
+  dplyr::summarise(lcof_empresa = mean(lcof_empresa),
+                   lcof_acionista = mean(lcof_acionista)) %>%
+  dplyr::ungroup()
+```
+
+## AGENDA
+----
+
+-  [**Análise de Viabilidade Financeira**](#capa_01)
+
+- [**Perspectiva Ambiental**](#capa_02)
+
+- [**Painel SAF**](#capa_03)
+
+- [**Formulário de Anúncios**](#capa_04)
+
+- [**Contribuições Workshop**](#capa_05)
+
+---
+class: inverse, center, middle 
+name: capa_01
+## ANÁLISE DE VIABILIDADE FINANCEIRA
+
+---
+## ANÁLISE DE VIABILIDADE FINANCEIRA
+<div style="text-align: justify">
+
+Para efeito de comparação de desempenho financeiro entre as rotas tecnológicas 
+de produção de SAF, toda a análise foi estruturada a partir de um projeto de 
+biorrefinaria de referência. 
+
+- **Volume de Produção Padronizado**: Para uma adequada comparação entre as 
+diferentes rotas tecnológicas de produção padronizou-se o volume de produção 
+em 200.000 m³/ano (vida útil de 25 anos).
+
+- **Verticalização do Projeto**: Com a finalidade de se avaliar o impacto de cada 
+etapa da cadeia produtiva na viabilidade financeira do projeto, adotou-se a 
+estratégia de verticalização integral (da cultura até SAF).
+
+---
+## ANÁLISE DE VIABILIDADE FINANCEIRA
+<div style="text-align: justify">
+
+Diagrama do Projeto de Biorrefinaria de Referência.
+
+```{r echo=FALSE, out.width='75%'}
+knitr::include_graphics(path = 'Slide1.png')
+```
+
+---
+## ANÁLISE DE VIABILIDADE FINANCEIRA
+<div style="text-align: justify">
+
+Ao todo foram consideradas 8 rotas de primeira geração.
+
+```{r echo=FALSE, out.width='75%'}
+knitr::include_graphics(path = 'Slide2.png')
+```
+
+---
+## ANÁLISE DE VIABILIDADE FINANCEIRA
+<div style="text-align: justify">
+
+- **Método de Avaliação**: Para estruturação do fluxo de caixa do projeto, em 
+cada rota tecnológica, adotou-se a técnica de fluxo de caixa descontado. Devido 
+a nível de receita esperado, o estudo limitou-se à estrutura de lucro real.
+
+- **Indicador de Viabilidade**: Para comparar o desempenho financeiro entre as rotas 
+tecnológicas de produção, adotou-se como base o LCOF (Levelized Cost of Fuel - 
+Custo Nivelado de Combustível).
+
+```{r echo=FALSE}
+knitr::include_graphics(path = 'Slide3.png')
+```
+
+---
+## ANÁLISE DE VIABILIDADE FINANCEIRA
+<div style="text-align: justify">
+
+Foram consideradas 2 óticas complementares de análise.
+
+- **Fluxo de Caixa da Empresa**: Foco na análise do resultado operacional do 
+projeto (sem financiamento). Neste caso, o resultado operacional deve ser 
+suficiente para remunerar acionistas e financiadoras. 
+
+  - **Custo de Capital**: Custo Médio Ponderado de Capital ($WACC$)
+
+- **Fluxo de Caixa do Acionista**: Foco na análise do resultado total do projeto 
+(operação + despesas financeiras). Neste caso, o resultado total deve ser 
+suficiente para remunerar apenas os acionistas.
+
+  - **Custo de Capital**: Custo de Capital Próprio ($K_e$)
+
+---
+## ANÁLISE DE VIABILIDADE FINANCEIRA
+
+```{r echo=FALSE}
+smc_lcof_comparativa <- smc %>%
+  tidyr::pivot_longer(cols = dplyr::everything(),
+                      names_to = 'ref',
+                      values_to = 'valor') %>%
+  dplyr::mutate(fc = ifelse(grepl(x = ref,
+                                  pattern = 'empresa'),
+                            'Empresa',
+                            'Acionista')) %>%
+  dplyr::mutate(ref = dplyr::case_when(
+    grepl(x = ref, pattern = 'soja') ~ 'Soja - HEFA',
+    grepl(x = ref, pattern = 'girassol') ~ 'Girassol - HEFA',
+    grepl(x = ref, pattern = 'palma') ~ 'Palma - HEFA',
+    grepl(x = ref, pattern = 'macauba') ~ 'Macaúba - HEFA',
+    grepl(x = ref, pattern = 'milho') ~ 'Milho - ATJ',
+    grepl(x = ref, pattern = 'cana_de_acucar') ~ 'Cana - ATJ',
+    grepl(x = ref, pattern = 'sorgo_sacarino') ~ 'Sorgo - ATJ',
+    grepl(x = ref, pattern = 'eucalipto') ~ 'Eucalipto - FT'))
+
+graf_smc_lcof_comparativa <- smc_lcof_comparativa %>%
+  ggplot() +
+  geom_boxplot(aes(x = ref,
+                   y = valor,
+                   fill = fc),
+               position = position_dodge(width = 0.8))  +
+  scale_fill_manual(values = c('#4291f9','#2CC194')) + 
+  labs(title = 'CUSTO NIVELADO DA PRODUÇÃO DE SAF',
+       y = 'LCOF - (R$/GJ)',
+       x = '',
+       color = '',
+       fill = '') +
+  theme_xaringan(text_font_size = 15,
+                 title_font_size = 15)
+
+graf_smc_lcof_comparativa  <- ggplotly(graf_smc_lcof_comparativa) %>% 
+  layout(boxmode = 'group',
+         legend = list(orientation = 'h')) %>% 
+  config(locale = 'pt-BR')
+
+widgetframe::frameWidget(graf_smc_lcof_comparativa, width = '100%', height = '100%')
+```
+   
+---
+## ANÁLISE DE VIABILIDADE FINANCEIRA
+
+```{r echo=FALSE}
+filtro <- 'HEFA'
+
+graf_sens_hefa <- sensibilidade_media %>%
+  dplyr::filter(tec == filtro) %>%
+  tidyr::pivot_longer(cols = c(lcof_empresa, lcof_acionista),
+                      names_to = 'ref',
+                      values_to = 'valor') %>%
+  dplyr::mutate(ref = ifelse(ref == 'lcof_empresa',
+                             'Empresa',
+                             'Acionista')) %>%
+  dplyr::mutate(cenario = forcats::fct_reorder(cenario, valor)) %>%
+  ggplot() +
+  geom_col(aes(x = valor, y = cenario, fill = ref,
+               text = paste0('Valor: ', scales::number(round(valor,2),
+                                                       decimal.mark = ',',
+                                                       suffix = '%'),
+                             '<br>Variável: ', cenario,
+                             '<br>', ref)),
+           position = 'dodge',
+           color = '#003364') +
+  scale_fill_manual(values = c('#4291f9','#2CC194')) + 
+  scale_x_continuous(limits = c(-10, 10),
+                     breaks = seq(from = -10, to = 10, by = 2)) +
+  labs(x = 'Variação do LCOF (%)',
+       y = '',
+       fill = '',
+       color = '') +
+  theme(legend.position = 'bottom') +
+  theme_xaringan(text_font_size = 15,
+                 title_font_size = 15)
+
+graf_sens_hefa  <- ggplotly(graf_sens_hefa, tooltip = 'text') %>% 
+  layout(legend = list(orientation = 'h'),
+         title = list(text = paste0(paste0('ANÁLISE DE SENSIBILIDADE MÉDIA (',filtro,')'),
+                      '<br>',
+                      '<sup>',
+                      'ALTERAÇÃO DE 10% NOS PARÂMETROS DO MODELO',
+                      '<br>')),
+         margin = list(l = 50, t = 50)) %>% 
+  config(locale = 'pt-BR')
+
+widgetframe::frameWidget(graf_sens_hefa, width = '100%', height = '100%')
+```
+
+---
+## ANÁLISE DE VIABILIDADE FINANCEIRA
+
+```{r echo=FALSE}
+filtro <- 'ATJ'
+
+graf_sens_hefa <- sensibilidade_media %>%
+  dplyr::filter(tec == filtro) %>%
+  tidyr::pivot_longer(cols = c(lcof_empresa, lcof_acionista),
+                      names_to = 'ref',
+                      values_to = 'valor') %>%
+  dplyr::mutate(ref = ifelse(ref == 'lcof_empresa',
+                             'Empresa',
+                             'Acionista')) %>%
+  dplyr::mutate(cenario = forcats::fct_reorder(cenario, valor)) %>%
+  ggplot() +
+  geom_col(aes(x = valor, y = cenario, fill = ref,
+               text = paste0('Valor: ', scales::number(round(valor,2),
+                                                       decimal.mark = ',',
+                                                       suffix = '%'),
+                             '<br>Variável: ', cenario,
+                             '<br>', ref)),
+           position = 'dodge',
+           color = '#003364') +
+  scale_fill_manual(values = c('#4291f9','#2CC194')) + 
+  scale_x_continuous(limits = c(-10, 10),
+                     breaks = seq(from = -10, to = 10, by = 2)) +
+  labs(x = 'Variação do LCOF (%)',
+       y = '',
+       fill = '',
+       color = '') +
+  theme(legend.position = 'bottom') +
+  theme_xaringan(text_font_size = 15,
+                 title_font_size = 15)
+
+graf_sens_hefa  <- ggplotly(graf_sens_hefa, tooltip = 'text') %>% 
+  layout(legend = list(orientation = 'h'),
+         title = list(text = paste0(paste0('ANÁLISE DE SENSIBILIDADE MÉDIA (',filtro,')'),
+                      '<br>',
+                      '<sup>',
+                      'ALTERAÇÃO DE 10% NOS PARÂMETROS DO MODELO',
+                      '<br>')),
+         margin = list(l = 50, t = 50)) %>% 
+  config(locale = 'pt-BR')
+
+widgetframe::frameWidget(graf_sens_hefa, width = '100%', height = '100%')
+```
+
+---
+## ANÁLISE DE VIABILIDADE FINANCEIRA
+
+```{r echo=FALSE}
+filtro <- 'FT'
+
+graf_sens_hefa <- sensibilidade_media %>%
+  dplyr::filter(tec == filtro) %>%
+  tidyr::pivot_longer(cols = c(lcof_empresa, lcof_acionista),
+                      names_to = 'ref',
+                      values_to = 'valor') %>%
+  dplyr::mutate(ref = ifelse(ref == 'lcof_empresa',
+                             'Empresa',
+                             'Acionista')) %>%
+  dplyr::mutate(cenario = forcats::fct_reorder(cenario, valor)) %>%
+  ggplot() +
+  geom_col(aes(x = valor, y = cenario, fill = ref,
+               text = paste0('Valor: ', scales::number(round(valor,2),
+                                                       decimal.mark = ',',
+                                                       suffix = '%'),
+                             '<br>Variável: ', cenario,
+                             '<br>', ref)),
+           position = 'dodge',
+           color = '#003364') +
+  scale_fill_manual(values = c('#4291f9','#2CC194')) + 
+  scale_x_continuous(limits = c(-10, 10),
+                     breaks = seq(from = -10, to = 10, by = 2)) +
+  labs(x = 'Variação do LCOF (%)',
+       y = '',
+       fill = '',
+       color = '') +
+  theme(legend.position = 'bottom') +
+  theme_xaringan(text_font_size = 15,
+                 title_font_size = 15)
+
+graf_sens_hefa  <- ggplotly(graf_sens_hefa, tooltip = 'text') %>% 
+  layout(legend = list(orientation = 'h'),
+         title = list(text = paste0(paste0('ANÁLISE DE SENSIBILIDADE MÉDIA (',filtro,')'),
+                      '<br>',
+                      '<sup>',
+                      'ALTERAÇÃO DE 10% NOS PARÂMETROS DO MODELO',
+                      '<br>')),
+         margin = list(l = 50, t = 50)) %>% 
+  config(locale = 'pt-BR')
+
+widgetframe::frameWidget(graf_sens_hefa, width = '100%', height = '100%')
+```
+
+---
+class: inverse, center, middle 
+name: capa_02
+## PERSPECTIVA AMBIENTAL
+
+---
+## PERSPECTIVA AMBIENTAL
+<div style="text-align: justify">
+
+Foi adicionada uma perspectiva ambiental associada à análise financeira por meio 
+do cálculo do custo marginal de abatimento de carbono (MAC). 
+
+Este indicador ambiental têm por finalidade mensurar o custo adicional 
+necessário para reduzir uma unidade adicional de dióxido de carbono (CO₂).
+
+```{r echo=FALSE}
+knitr::include_graphics(path = 'Slide4.png')
+```
+
+---
+## PERSPECTIVA AMBIENTAL
+
+```{r echo=FALSE}
+smc_mac_comparativa <- smc %>%
+  tidyr::pivot_longer(cols = dplyr::everything(),
+                      names_to = 'ref',
+                      values_to = 'valor') %>%
+  dplyr::mutate(fc = ifelse(grepl(x = ref,
+                                  pattern = 'empresa'),
+                            'Empresa',
+                            'Acionista')) %>%
+  dplyr::mutate(ref = dplyr::case_when(
+    grepl(x = ref, pattern = 'soja') ~ 'Soja - HEFA',
+    grepl(x = ref, pattern = 'girassol') ~ 'Girassol - HEFA',
+    grepl(x = ref, pattern = 'palma') ~ 'Palma - HEFA',
+    grepl(x = ref, pattern = 'macauba') ~ 'Macaúba - HEFA',
+    grepl(x = ref, pattern = 'milho') ~ 'Milho - ATJ',
+    grepl(x = ref, pattern = 'cana_de_acucar') ~ 'Cana - ATJ',
+    grepl(x = ref, pattern = 'sorgo_sacarino') ~ 'Sorgo - ATJ',
+    grepl(x = ref, pattern = 'eucalipto') ~ 'Eucalipto - FT'))
+
+smc_mac_comparativa <- smc_mac_comparativa %>%
+  dplyr::mutate(mac = (valor - 74.37)/dplyr::case_when(
+    grepl(x = ref, pattern = 'Soja') ~ 21.6,
+    grepl(x = ref, pattern = 'Girassol') ~ 12.5,
+    grepl(x = ref, pattern = 'Palma') ~ 12.5,
+    grepl(x = ref, pattern = 'Macaúba') ~ 12.5,
+    grepl(x = ref, pattern = 'Milho') ~ 11.10,
+    grepl(x = ref, pattern = 'Cana') ~ 56.2,
+    grepl(x = ref, pattern = 'Sorgo') ~ 56.2,
+    grepl(x = ref, pattern = 'Eucalipto') ~ 68.2))
+
+graf_smc_mac_comparativa <- smc_mac_comparativa %>%
+  ggplot() +
+  geom_boxplot(aes(x = ref,
+                   y = mac,
+                   fill = fc),
+               position = position_dodge(width = 0.8))  +
+  scale_fill_manual(values = c('#4291f9','#2CC194')) + 
+  labs(title = 'CUSTO MARGINAL DE ABATIMENTO DO CARBONO',
+       y = 'MAC - (R$/kgCO2e)',
+       x = '',
+       color = '',
+       fill = '') +
+  theme_xaringan(text_font_size = 15,
+                 title_font_size = 15)
+
+graf_smc_mac_comparativa  <- ggplotly(graf_smc_mac_comparativa) %>% 
+  layout(boxmode = 'group',
+         legend = list(orientation = 'h')) %>% 
+  config(locale = 'pt-BR')
+
+widgetframe::frameWidget(graf_smc_mac_comparativa, width = '100%', height = '100%')
+```
+
+---
+class: inverse, center, middle 
+name: capa_03
+## PAINEL SAF
+
+---
+class: inverse, center, middle 
+name: capa_04
+## FORMULÁRIO DE ANÚNCIOS
+
+---
+class: inverse, center, middle 
+name: capa_05
+## CONTRIBUIÇÕES WORKSHOP
+
